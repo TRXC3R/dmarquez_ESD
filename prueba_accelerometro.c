@@ -18,9 +18,10 @@
 #define OUT_X_L   0x3B             // Registro de salida para el eje X (inicio de bloque de 6 bytes)
 
 int main(void) {
-    int file;
-    uint8_t accel_config;
-    float scale;
+    int file;                       //Fichero de comunicacion I2C de donde se leen las medidas del accelerometro
+    uint8_t accel_config;           // Valor en hexadecimal de la configuracion del accelerometro (ejes)
+    int fondo_escala;               // Valor entero entre 0-3 del fondo de escala configurado al inicio del programa configurado por el usuario 
+    float scale;                    // Sensibilidad, depende del fondo de escala
     
     // Abrir el bus I2C
     if ((file = open(I2C_BUS, O_RDWR)) < 0) {
@@ -49,16 +50,7 @@ int main(void) {
         exit(1);
     }
 
-/*
-    // Configurar el sensor escribiendo en CTRL_REG1.
-    // 0x57 (01010111): habilita los ejes X, Y, Z y fija una tasa de muestreo de 100 Hz.
-    uint8_t config[2] = {CTRL_REG1, 0xE0};
-    if (write(file, config, 2) != 2) {
-        perror("Error al escribir en CTRL_REG1");
-        close(file);
-        exit(1);
-    }*/
-    
+
     // Configurar el DLPF para reducir el ruido (por ejemplo, valor 0x03)
     uint8_t dlpf[2] = {CONFIG, 0x04};
     if (write(file, dlpf, 2) != 2) {
@@ -67,34 +59,35 @@ int main(void) {
         exit(1);
     }    
     
-    printf("Ingrese un valor en hexadecimal (E0, E8, F0, F8): ");
-    scanf("%x", &accel_config);  // Leer el valor en formato hexadecimal
+    //printf("Ingrese un valor en hexadecimal (E0, E8, F0, F8): ");
+    //scanf("%x", &accel_config);  // Leer el valor en formato hexadecimal
     
-    // Configurar el acelerometro, activar 3 ejes y determinar un fondo de escala +-2g 
-    uint8_t accel_conf[2] = {CONFIG_ACCEL, accel_config};
-    if(write(file, accel_conf, 2) !=2){
-        perror("Error de configuracion del acelerometro (CONFIG_ACCEL)");
-        close(file);
-        exit(1);
-    }        
+    printf("Ingrese el valor del fondo de escala\n ");
+    printf("0 = +-2g\n");
+    printf("1 = +-4g\n");
+    printf("2 = +-8g\n");
+    printf("3 = +-16g\n");
+    scanf("%x", &fondo_escala);  // Leer el valor en formato hexadecimal
+    
 
-    // Espera para que el sensor se estabilice
-    usleep(100000);
-    
-    switch(accel_config){ 
-        case 0xE0:
+    switch(fondo_escala){ 
+        case 0:
+            accel_config =  0xE0; 
             printf("Has ingresado escala +-2g\n");
             scale = 16384.0;
             break;
-        case 0xE8:
+        case 1:
+            accel_config =  0xE8; 
             printf("Has ingresado escala +-4g\n");
             scale = 8192.0;
             break;
-        case 0xF0:
+        case 2:
+            accel_config =  0xF0; 
             printf("Has ingresado escala +-8g\n");
             scale = 4096.0;
             break;
-        case 0xF8:
+        case 3:
+            accel_config =  0xF8; 
             printf("Has ingresado escala +-16g\n");
             scale = 2048.0;
             break;
@@ -105,6 +98,16 @@ int main(void) {
         
         printf("ESCALA DEL ACELEROMETRO: %f\n", scale);
         
+      // Configurar el acelerometro, activar 3 ejes y determinar un fondo de escala +-2g 
+    uint8_t accel_conf[2] = {CONFIG_ACCEL, accel_config};
+    if(write(file, accel_conf, 2) !=2){
+        perror("Error de configuracion del acelerometro (CONFIG_ACCEL)");
+        close(file);
+        exit(1);
+    }        
+
+    // Espera para que el sensor se estabilice
+    usleep(100000);
     
     // Bucle de lectura continua
     while (1) {
@@ -136,7 +139,7 @@ int main(void) {
         // Mostrar los datos en pantalla
         printf("X: %.3f g, Y: %.3f g, Z: %.3f g\n", ax, ay, az);
         
-        usleep(1000000);  // Pausa de 100 ms entre lecturas
+        usleep(100000);  // Pausa de 100 ms entre lecturas
     }
 
     close(file);
