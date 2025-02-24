@@ -9,7 +9,7 @@
 #include <stdint.h>
 
 #define I2C_BUS "/dev/i2c-1"       // Bus I2C de la Raspberry Pi 4
-#define LIS3DH_ADDRESS 0x68        // Dirección I2C del MPU6050 (verifica si es 0x68 o 0x69), ad0 nivel bajo-alto
+#define MPU6050_ADDRESS 0x68        // Dirección I2C del MPU6050 (verifica si es 0x68 o 0x69), ad0 nivel bajo-alto
 
 // Registros del LIS3DH
 #define PWR_MGMT_1    0x6B        // Registro de gestión de energía
@@ -19,6 +19,8 @@
 
 int main(void) {
     int file;
+    uint8_t accel_config;
+    float scale;
     
     // Abrir el bus I2C
     if ((file = open(I2C_BUS, O_RDWR)) < 0) {
@@ -27,7 +29,7 @@ int main(void) {
     }
 
     // Configurar el dispositivo como esclavo
-    if (ioctl(file, I2C_SLAVE, LIS3DH_ADDRESS) < 0) {
+    if (ioctl(file, I2C_SLAVE, MPU6050_ADDRESS) < 0) {
         perror("Error al configurar el dispositivo I2C");
         close(file);
         exit(1);
@@ -38,6 +40,7 @@ int main(void) {
    * Por defecto, el sensor arranca en este modo para ahorrar energía. 
    * Al escribir 0x00 en el registro PWR_MGMT_1 se "despierta" el dispositivo, permitiéndole comenzar 
    * a realizar mediciones de aceleración y giroscopio.*/
+   /*El bit 6 será el que haga que el acelerómetro salga del modo sueño. Por defecto esta activo*/
    
     uint8_t wakeup[2] = {PWR_MGMT_1, 0x00};
     if (write(file, wakeup, 2) != 2) {
@@ -62,11 +65,47 @@ int main(void) {
         perror("Error al configurar DLPF (CONFIG)");
         close(file);
         exit(1);
-    }
+    }    
+    
+    printf("Ingrese un valor en hexadecimal (E0, E8, F0, F8): ");
+    scanf("%x", &accel_config);  // Leer el valor en formato hexadecimal
+    
+    // Configurar el acelerometro, activar 3 ejes y determinar un fondo de escala +-2g 
+    uint8_t accel_conf[2] = {CONFIG_ACCEL, accel_config};
+    if(write(file, accel_conf, 2) !=2){
+        perror("Error de configuracion del acelerometro (CONFIG_ACCEL)");
+        close(file);
+        exit(1);
+    }        
 
     // Espera para que el sensor se estabilice
     usleep(100000);
-
+    
+    switch(accel_config){ 
+        case 0xE0:
+            printf("Has ingresado escala +-2g\n");
+            scale = 16384.0;
+            break;
+        case 0xE8:
+            printf("Has ingresado escala +-4g\n");
+            scale = 8192.0;
+            break;
+        case 0xF0:
+            printf("Has ingresado escala +-8g\n");
+            scale = 4096.0;
+            break;
+        case 0xF8:
+            printf("Has ingresado escala +-16g\n");
+            scale = 2048.0;
+            break;
+        default:
+            printf("Valor no reconocido.\n");
+            break;
+        }
+        
+        printf("ESCALA DEL ACELEROMETRO: %f\n", scale);
+        
+    
     // Bucle de lectura continua
     while (1) {
         // Para leer en modo auto-incremento se activa poniendo a 1 el bit 7 del registro de inicio.
@@ -90,14 +129,14 @@ int main(void) {
         
         /// Conversión a "g"
         // Para ±2g, la sensibilidad es 16384 LSB/g.
-        float ax = accel_x / 2048.0;
-        float ay = accel_y / 2048.0;
-        float az = accel_z / 2048.0;
+        float ax = accel_x / scale;
+        float ay = accel_y / scale;
+        float az = accel_z / scale;
         
         // Mostrar los datos en pantalla
         printf("X: %.3f g, Y: %.3f g, Z: %.3f g\n", ax, ay, az);
         
-        usleep(100000);  // Pausa de 100 ms entre lecturas
+        usleep(1000000);  // Pausa de 100 ms entre lecturas
     }
 
     close(file);
