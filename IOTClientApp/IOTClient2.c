@@ -42,18 +42,20 @@ typedef struct {
 } SensorController;
 
 void ejecutar_sensores(const char* server_ip) {
-    FILE* f = fopen(TEMP_FILE, "w");
-    // Enviar fichero al servidor
+
+	// Enviar fichero al servidor
 	int sock = 0;
 	struct sockaddr_in serv_addr;
 	char buffer[BUFFER_SIZE];
-	FILE* file = fopen(TEMP_FILE, "r");
-
-    if (!f) {
-        perror("Error al abrir fichero");
-        return;
-    }
 	while(1){
+		FILE* f = fopen(TEMP_FILE, "w");
+		FILE* file = fopen(TEMP_FILE, "r");
+
+		if (!f) {
+			perror("Error al abrir fichero");
+			return;
+		}
+
 		for (int i = 0; i < 10; i++) {
 			char* acc = dato_accelerometro();
 			char* col = dato_colorimetro();
@@ -100,11 +102,8 @@ void ejecutar_sensores(const char* server_ip) {
 		}
 
 		printf("Datos enviados al servidor.\n");
-		sleep(10);
 		fclose(file);
-
 	}
-    fclose(file);
     close(sock);
 
 }

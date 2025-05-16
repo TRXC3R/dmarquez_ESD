@@ -12,7 +12,7 @@
 #include <netinet/in.h>
 
 #define PORT 8080
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 4092
 #define OUTPUT_FILE "registro_sensores.txt"
 
 int main() {
@@ -45,38 +45,39 @@ int main() {
     }
 
     printf("Servidor esperando conexiones en el puerto %d...\n", PORT);
+	while(1){
+		// Aceptar una conexión
+		if ((client_socket = accept(server_fd, (struct sockaddr*)&address, &addrlen)) < 0) {
+			perror("Error al aceptar conexión");
+			exit(EXIT_FAILURE);
+		}
 
-    // Aceptar una conexión
-    if ((client_socket = accept(server_fd, (struct sockaddr*)&address, &addrlen)) < 0) {
-        perror("Error al aceptar conexión");
-        exit(EXIT_FAILURE);
-    }
+		// Abrir fichero para guardar los datos
+		FILE* out = fopen(OUTPUT_FILE, "w");
+		if (!out) {
+			perror("Error al abrir archivo de salida");
+			close(client_socket);
+			close(server_fd);
+			return -1;
+		}
 
-    // Abrir fichero para guardar los datos
-    FILE* out = fopen(OUTPUT_FILE, "w");
-    if (!out) {
-        perror("Error al abrir archivo de salida");
-        close(client_socket);
-        close(server_fd);
-        return -1;
-    }
+		printf("Conexión establecida. Recibiendo datos:\n");
 
-    printf("Conexión establecida. Recibiendo datos:\n");
+		// Leer datos en bucle hasta que el cliente cierre
+		int valread;
+		while ((valread = read(client_socket, buffer, BUFFER_SIZE - 1)) > 0) {
+			buffer[valread] = '\0';  // Asegurar que termina en null
+			printf("%s", buffer);    // Mostrar por pantalla
+			fprintf(out, "%s", buffer); // Guardar en archivo
+			fflush(out);
+		}
 
-    // Leer datos en bucle hasta que el cliente cierre
-    int valread;
-    while ((valread = read(client_socket, buffer, BUFFER_SIZE - 1)) > 0) {
-        buffer[valread] = '\0';  // Asegurar que termina en null
-        printf("%s", buffer);    // Mostrar por pantalla
-        fprintf(out, "%s", buffer); // Guardar en archivo
-        fflush(out);
-    }
+		printf("\nRecepción finalizada. Datos guardados en '%s'\n", OUTPUT_FILE);
 
-    printf("\nRecepción finalizada. Datos guardados en '%s'\n", OUTPUT_FILE);
-
-    fclose(out);
-    close(client_socket);
-    close(server_fd);
+		fclose(out);
+		close(client_socket);
+	}
+	close(server_fd);
     return 0;
 }
 
