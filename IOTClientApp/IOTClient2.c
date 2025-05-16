@@ -49,7 +49,6 @@ void ejecutar_sensores(const char* server_ip) {
 	char buffer[BUFFER_SIZE];
 	while(1){
 		FILE* f = fopen(TEMP_FILE, "w");
-		FILE* file = fopen(TEMP_FILE, "r");
 
 		if (!f) {
 			perror("Error al abrir fichero");
@@ -65,8 +64,10 @@ void ejecutar_sensores(const char* server_ip) {
 		}
 
 		fclose(f);
-
-
+		
+		// 2. Ahora abrir el archivo de nuevo para lectura
+		FILE* file = fopen(TEMP_FILE, "r");
+		
 		if (!file) {
 			perror("No se pudo abrir el archivo para envío");
 			return;
