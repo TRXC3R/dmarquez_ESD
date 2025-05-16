@@ -1,0 +1,10 @@
+1: X: 1.489 g, Y: 0.433 g, Z: 0.308 g | Clear: 3940, Red: 1403, Green: 1368, Blue: 1017
+2: X: 1.553 g, Y: 0.418 g, Z: 0.354 g | Clear: 3950, Red: 1408, Green: 1373, Blue: 1022
+3: X: 1.551 g, Y: 0.418 g, Z: 0.352 g | Clear: 3949, Red: 1409, Green: 1374, Blue: 1023
+4: X: 1.551 g, Y: 0.415 g, Z: 0.352 g | Clear: 3966, Red: 1415, Green: 1379, Blue: 1027
+5: X: 1.554 g, Y: 0.415 g, Z: 0.352 g | Clear: 4010, Red: 1430, Green: 1394, Blue: 1037
+6: X: 1.553 g, Y: 0.418 g, Z: 0.351 g | Clear: 4088, Red: 1456, Green: 1420, Blue: 1056
+7: X: 1.554 g, Y: 0.415 g, Z: 0.349 g | Clear: 4104, Red: 1462, Green: 1425, Blue: 1060
+8: X: 1.550 g, Y: 0.416 g, Z: 0.354 g | Clear: 4111, Red: 1464, Green: 1427, Blue: 1062
+9: X: 1.551 g, Y: 0.416 g, Z: 0.353 g | Clear: 4030, Red: 1438, Green: 1395, Blue: 1030
+10: X: 1.554 g, Y: 0.415 g, Z: 0.352 g | Clear: 4030, Red: 1438, Green: 1395, Blue: 1030
