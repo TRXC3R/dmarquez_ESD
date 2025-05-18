@@ -2,63 +2,71 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <time.h>
 
 #include "accelerometro.h"
 #include "colorimetro.h"
 
+#define JSON_FILE "telemetry-data-as-object.json"
 #define BUFFER_SIZE 1024
-#define TOKEN "A1_TEST_TOKEN"
 #define PORT_MQTT 1883
 
-// "Clase" para recolección de datos
 typedef struct {
-    void (*ejecutar)(const char* server_ip);
+    void (*ejecutar)(const char* server_ip, const char* access_token);
 } SensorController;
 
-void ejecutar_sensores(const char* server_ip) {
+void ejecutar_sensores(const char* server_ip, const char* access_token) {
     char cmd[BUFFER_SIZE * 2];
 
     while (1) {
-        // Obtener valores de sensores
         struct AccData acc = accelerometro();
         struct ColorData col = colorimetro();
 
-        // Construir mensaje JSON
-        char payload[BUFFER_SIZE];
-        snprintf(payload, sizeof(payload),
-            "{\"ax\":%.3f, \"ay\":%.3f, \"az\":%.3f, \"clear\":%d, \"red\":%d, \"green\":%d, \"blue\":%d}",
-            acc.ax, acc.ay, acc.az, col.clear, col.red, col.green, col.blue
-        );
+        FILE* json = fopen(JSON_FILE, "w");
+        if (!json) {
+            perror("Error al crear archivo JSON");
+            return;
+        }
 
-        // Construir comando mosquitto_pub
+        fprintf(json,
+            "{\n"
+            "  \"ax\": %.3f,\n"
+            "  \"ay\": %.3f,\n"
+            "  \"az\": %.3f,\n"
+            "  \"clear\": %d,\n"
+            "  \"red\": %d,\n"
+            "  \"green\": %d,\n"
+            "  \"blue\": %d\n"
+            "}\n",
+            acc.ax, acc.ay, acc.az,
+            col.clear, col.red, col.green, col.blue
+        );
+        fclose(json);
+
         snprintf(cmd, sizeof(cmd),
-            "mosquitto_pub -d -q 1 -h \"%s\" -p %d -t \"v1/devices/me/telemetry\" -u \"%s\" -m '%s'",
-            server_ip, PORT_MQTT, TOKEN, payload
+            "mosquitto_pub -d -q 1 -h \"%s\" -p %d -t \"v1/devices/me/telemetry\" -u \"%s\" -f \"%s\"",
+            server_ip, PORT_MQTT, access_token, JSON_FILE
         );
 
-        // Ejecutar comando
         int result = system(cmd);
         if (result != 0) {
             fprintf(stderr, "Error al ejecutar: %s\n", cmd);
         } else {
-            printf("Datos enviados: %s\n", payload);
+            printf("Datos enviados desde %s\n", JSON_FILE);
         }
 
         sleep(1);
     }
 }
 
-// Inicializador de la "clase"
 SensorController new_controller() {
     SensorController ctrl;
     ctrl.ejecutar = ejecutar_sensores;
     return ctrl;
 }
 
-// MAIN
 int main() {
     char ip[BUFFER_SIZE];
+    char token[BUFFER_SIZE];
 
     printf("Introduce la IP del servidor ThingsBoard: ");
     if (fgets(ip, BUFFER_SIZE, stdin) == NULL) {
@@ -66,11 +74,19 @@ int main() {
         return 1;
     }
 
-    size_t len = strlen(ip);
-    if (ip[len - 1] == '\n') ip[len - 1] = '\0';  // Quitar '\n'
+    printf("Introduce el TOKEN de acceso del dispositivo: ");
+    if (fgets(token, BUFFER_SIZE, stdin) == NULL) {
+        perror("Error al leer TOKEN");
+        return 1;
+    }
+
+    // Eliminar saltos de línea
+    ip[strcspn(ip, "\n")] = '\0';
+    token[strcspn(token, "\n")] = '\0';
 
     SensorController controlador = new_controller();
-    controlador.ejecutar(ip);
+    controlador.ejecutar(ip, token);
 
     return 0;
 }
+
