@@ -45,6 +45,10 @@ int main() {
     }
 
     printf("Servidor esperando conexiones en el puerto %d...\n", PORT);
+	FILE* out = fopen(OUTPUT_FILE, "w");
+	fclose(out);          // Cerrar fichero
+
+
 	while(1){
 		// Aceptar una conexión
 		if ((client_socket = accept(server_fd, (struct sockaddr*)&address, &addrlen)) < 0) {
@@ -53,7 +57,7 @@ int main() {
 		}
 
 		// Abrir fichero para guardar los datos
-		FILE* out = fopen(OUTPUT_FILE, "w");
+		FILE* out = fopen(OUTPUT_FILE, "a");
 		if (!out) {
 			perror("Error al abrir archivo de salida");
 			close(client_socket);
@@ -70,13 +74,16 @@ int main() {
 			printf("%s", buffer);    // Mostrar por pantalla
 			fprintf(out, "%s", buffer); // Guardar en archivo
 			fflush(out);
+			//close(client_socket); // Cerrar conexion con el cliente
+			//fclose(out);          // Cerrar fichero
+
 		}
 
 		printf("\nRecepción finalizada. Datos guardados en '%s'\n", OUTPUT_FILE);
 
-		fclose(out);
-		close(client_socket);
-	}
+		fclose(out);          // Cerrar fichero
+		close(client_socket); //
+	} // bucle while(1)
 	close(server_fd);
     return 0;
 }

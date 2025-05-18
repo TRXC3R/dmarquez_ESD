@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <arpa/inet.h>
+#include <netinet/tcp.h>
 
 #include "accelerometro.h"
 #include "colorimetro.h"
@@ -50,6 +51,7 @@ void ejecutar_sensores(const char* server_ip) {
 	while(1){
 		FILE* f = fopen(TEMP_FILE, "w");
 
+
 		if (!f) {
 			perror("Error al abrir fichero");
 			return;
@@ -64,10 +66,9 @@ void ejecutar_sensores(const char* server_ip) {
 		}
 
 		fclose(f);
-		
-		// 2. Ahora abrir el archivo de nuevo para lectura
+
 		FILE* file = fopen(TEMP_FILE, "r");
-		
+
 		if (!file) {
 			perror("No se pudo abrir el archivo para envío");
 			return;
@@ -95,6 +96,9 @@ void ejecutar_sensores(const char* server_ip) {
 			fclose(file);
 			return;
 		}
+		//Desacivar Naggle para que los datos se encia¡en inmediatamente
+		int flag = 1;
+		setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
 
 		// Enviar línea por línea (puedes también enviar todo de golpe si lo prefieres)
 		while (fgets(buffer, BUFFER_SIZE, file) != NULL) {
@@ -104,8 +108,9 @@ void ejecutar_sensores(const char* server_ip) {
 
 		printf("Datos enviados al servidor.\n");
 		fclose(file);
+		close(sock);
 	}
-    close(sock);
+
 
 }
 
