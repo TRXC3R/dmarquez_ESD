@@ -156,7 +156,6 @@ int main() {
                 Medida m;
                 if (parsear_medida(linea, &m)) {
                     agregar_medida(m);
-                    calcular_estadisticas();
                 }
                 linea = strtok(NULL, "\n");
             }
@@ -165,6 +164,7 @@ int main() {
         fclose(out);
         close(client_socket);
         printf("\nRecepción finalizada. Datos guardados en '%s'\n", OUTPUT_FILE);
+        calcular_estadisticas();
     }
 
     close(server_fd);
