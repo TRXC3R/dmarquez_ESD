@@ -9,4 +9,4 @@ El proyecto que funcioa está dentro de la carpeta IOTClientApp
 
 
 El proyecto funcionando con Mosquito que funcioa está dentro de la carpeta IOTClientMosquitto
-  1. IOTClient3.c es el archivo que contiene el código del cliente, se conecta al servidor y manda datos cada segundo durante 10 segundos), los almacena en un archivo json para mandarlos con el mosquitto_pub, es necesario saber la IP del servidor y el TOKEN para conectarse y enviar datos correctamente.
+  1. IOTClient2.c es el archivo que contiene el código del cliente, se conecta al servidor y manda datos cada segundo durante 10 segundos), los almacena en un archivo json para mandarlos con el mosquitto_pub, es necesario saber la IP del servidor y el TOKEN para conectarse y enviar datos correctamente. Ejecutable clientMosquito
