@@ -18,8 +18,8 @@ void ejecutar_sensores(const char* server_ip, const char* access_token) {
     char cmd[BUFFER_SIZE * 2];
 
     while (1) {
-        struct AccData acc = accelerometro();
-        struct ColorData col = colorimetro();
+        MeasAcc acc = accelerometro();
+        MeasCol ColorData col = colorimetro();
 
         FILE* json = fopen(JSON_FILE, "w");
         if (!json) {
